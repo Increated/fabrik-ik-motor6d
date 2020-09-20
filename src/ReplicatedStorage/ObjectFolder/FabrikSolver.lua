@@ -28,6 +28,8 @@ function FabrikSolver.new(OriginalLimbVectorTable,LimbVectorTable, LimbLengthTab
     --Obtain a CFrame axis at each joint to do constraints with
     obj.JointAxisTable = nil
 
+    obj.JointWorldPositionTable = {}
+
     -- Initialize number for summing
     local MaxLength = 0
     -- adds all the magnitudes of the limb vector
@@ -73,6 +75,7 @@ function FabrikSolver:IterateOnce(originCF, targetPosition, tolerance)
         -- Do backwards on itself first then forwards
         self:Backwards(originCF, targetPosition)
         self:Forwards(originCF, targetPosition)
+        self:UpdateJointAxis(originCF)
 
         return self.LimbVectorTable
 
@@ -261,17 +264,31 @@ end
 ]]
 function FabrikSolver:UpdateJointAxis(originCF)
 
+    
     --If joint axis hasn't been created yet then create it
     local newJointAxisTable = {}
+    local newJointWorldPositionTable = {}
     if not self.JointAxisTable then
+        --store replicas of the originCF at each joint
         for i =1, #self.OriginalLimbVectorTable, 1 do
-            newJointAxisTable[#newJointAxisTable+1]= originCF
+            newJointAxisTable[#newJointAxisTable+1]= originCF-originCF.Position
         end
         self.JointAxisTable = newJointAxisTable
+
     else
+        --adjust the first
+        self.JointAxisTable[1] = originCF
+
+        local vectorSumFromFirstJoint = Vector3.new()
 
         for i=1,#self.OriginalLimbVectorTable-1,1 do
         
+
+            if i ~= 1 then
+                vectorSumFromFirstJoint = vectorSumFromFirstJoint + self.LimbVectorTable[i]
+            end
+            local motorPosition = originCF.Position + vectorSumFromFirstJoint
+
             --Obtains the direction of the original vector limb
             local originalVectorLimb = self.OriginalLimbVectorTable[i]
             local currentVectorLimb = self.LimbVectorTable[i]
@@ -284,8 +301,12 @@ function FabrikSolver:UpdateJointAxis(originCF)
             local limbRotationAngle = math.acos(safetyClamp)
             local limbRotationAxis = limbVectorRelativeToOriginal:Cross(currentVectorLimb) -- obtain the rotation axis
         
-            local rotateCF = CFrame.fromAxisAngle(limbRotationAxis,limbRotationAngle)
-            self.JointAxisTable[i+1] = self.JointAxisTable[i]*rotateCF
+            
+            local previousJointCF = self.JointAxisTable[i]
+            local undoPreviousLimbCF = previousJointCF:Inverse()*CFrame.new(motorPosition)
+            local rotateCF = CFrame.fromAxisAngle(limbRotationAxis,limbRotationAngle)*CFrame.fromMatrix(Vector3.new(),previousJointCF.RightVector,previousJointCF.UpVector)
+
+            self.JointAxisTable[i+1] = undoPreviousLimbCF*rotateCF
             
         end
     end

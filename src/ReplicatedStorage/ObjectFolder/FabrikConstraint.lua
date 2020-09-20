@@ -11,6 +11,7 @@ function FabrikConstraint.new(Part)
     --If there is a part, relative constraint axis is set accordingly
     if Part then
     obj.Part = Part
+    obj.PartInitialCFrame = Part.CFrame
     obj.CenterAxis = Part.CFrame.LookVector
     obj.XAxis = Part.CFrame.RightVector
     obj.YAxis = Part.CFrame.UpVector
@@ -69,19 +70,24 @@ function FabrikConstraint:UpdateJointAxis(jointPosition,jointAxis)
         --creates the part and parents it to the workspace
         self.DebugPart = Instance.new("WedgePart")
         self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
-        self.DebugPart.Size = Vector3.new(1,1,3)
+        self.DebugPart.Size = Vector3.new(1,1,2)
         self.DebugPart.Anchored = true
         self.DebugPart.Parent = workspace
         self.DebugPartCreated = true
     elseif self.DebugMode then
         
         --ok it works
-        local jointCFrameAtMotor = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
-        --self.DebugPart.CFrame = jointCFrameAtMotor
+        local jointCFrameAtMotor = (jointAxis-jointAxis.Position)
+        --self.DebugPart.CFrame = CFrame.new(jointPosition)*jointCFrameAtMotor
 
+        local initialRotation = self.PartInitialCFrame-self.PartInitialCFrame.Position
         --now needs to be relative to the part constraints
-        self.DebugPart.CFrame = CFrame.new(jointPosition)*jointCFrameAtMotor:ToObjectSpace(self.Part.CFrame)
+        local ConstraintAxisRotation = jointCFrameAtMotor:ToWorldSpace(initialRotation)-jointCFrameAtMotor:ToWorldSpace(initialRotation).Position
+        self.DebugPart.CFrame = ConstraintAxisRotation+self.Part.CFrame.Position
 
+        self.CenterAxis = ConstraintAxisRotation.LookVector
+        self.XAxis = ConstraintAxisRotation.RightVector
+        self.YAxis =ConstraintAxisRotation.UpVector
     end
 
 end

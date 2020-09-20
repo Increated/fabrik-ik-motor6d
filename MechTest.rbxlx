@@ -62,26 +62,26 @@
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<CoordinateFrame name="CFrame">
-					<X>-57.7270355</X>
-					<Y>19.7709045</Y>
-					<Z>-0.480403632</Z>
-					<R00>-0.285296977</R00>
-					<R01>0.498792738</R01>
-					<R02>-0.818420231</R02>
-					<R10>-0</R10>
-					<R11>0.853909492</R11>
-					<R12>0.520421863</R12>
-					<R20>0.958439231</R20>
-					<R21>0.148474783</R21>
-					<R22>-0.243617743</R22>
+					<X>-41.155098</X>
+					<Y>16.4039536</Y>
+					<Z>13.2722225</Z>
+					<R00>0.998394489</R00>
+					<R01>-0.0138952481</R01>
+					<R02>0.054912515</R02>
+					<R10>-9.31322464e-10</R10>
+					<R11>0.969444394</R11>
+					<R12>0.245311499</R12>
+					<R20>-0.0566432849</R20>
+					<R21>-0.244917646</R21>
+					<R22>0.967887938</R22>
 				</CoordinateFrame>
 				<Ref name="CameraSubject">null</Ref>
 				<token name="CameraType">0</token>
 				<float name="FieldOfView">70</float>
 				<CoordinateFrame name="Focus">
-					<X>-56.0901947</X>
-					<Y>18.7300606</Y>
-					<Z>0.00683197379</Z>
+					<X>-41.2649231</X>
+					<Y>15.9133301</Y>
+					<Z>11.3364449</Z>
 					<R00>1</R00>
 					<R01>0</R01>
 					<R02>0</R02>
@@ -1116,7 +1116,7 @@ gcLgc4RKxr21zq2UlJSM]]></BinaryString>
 						<float name="TopParamB">0.5</float>
 						<token name="TopSurface">0</token>
 						<token name="TopSurfaceInput">0</token>
-						<float name="Transparency">0</float>
+						<float name="Transparency">0.800000012</float>
 						<bool name="UsePartColor">false</bool>
 						<Vector3 name="Velocity">
 							<X>0</X>
@@ -1247,7 +1247,7 @@ gcLgc4RKxr21zq2UlJSM]]></BinaryString>
 						<float name="TopParamB">0.5</float>
 						<token name="TopSurface">0</token>
 						<token name="TopSurfaceInput">0</token>
-						<float name="Transparency">0</float>
+						<float name="Transparency">0.800000012</float>
 						<bool name="UsePartColor">false</bool>
 						<Vector3 name="Velocity">
 							<X>0</X>
@@ -1378,7 +1378,7 @@ gcLgc4RKxr21zq2UlJSM]]></BinaryString>
 						<float name="TopParamB">0.5</float>
 						<token name="TopSurface">0</token>
 						<token name="TopSurfaceInput">0</token>
-						<float name="Transparency">0</float>
+						<float name="Transparency">0.800000012</float>
 						<bool name="UsePartColor">false</bool>
 						<Vector3 name="Velocity">
 							<X>0</X>
@@ -1495,7 +1495,7 @@ gcLgc4RKxr21zq2UlJSM]]></BinaryString>
 						<float name="TopParamB">0.5</float>
 						<token name="TopSurface">0</token>
 						<token name="TopSurfaceInput">0</token>
-						<float name="Transparency">1</float>
+						<float name="Transparency">0.800000012</float>
 						<Vector3 name="Velocity">
 							<X>0</X>
 							<Y>0</Y>
@@ -12089,7 +12089,7 @@ leftLegChain:SetSecondaryConstraints(leftLegConstraintsSecondary)
 local leftLegRegionPart1 = lowerBody.ConstraintZones.LeftLegPart1
 local leftLegRegionPart2 = lowerBody.ConstraintZones.LeftLegPart2
 local leftLegRegion = {leftLegRegionPart1,leftLegRegionPart2}
-leftLegChain:SetPrimaryConstraintRegion(leftLegRegion)
+--leftLegChain:SetPrimaryConstraintRegion(leftLegRegion)
 
 --Repeat for the right leg-----------
 
@@ -12123,7 +12123,7 @@ rightLegChain:SetSecondaryConstraints(rightLegConstraintsSecondary)
 local rightLegRegionPart1 = lowerBody.ConstraintZones.RightLegPart1
 local rightLegRegionPart2 = lowerBody.ConstraintZones.RightLegPart2
 local rightLegRegion = {rightLegRegionPart1,rightLegRegionPart2}
-rightLegChain:SetPrimaryConstraintRegion(rightLegRegion)
+--rightLegChain:SetPrimaryConstraintRegion(rightLegRegion)
 
 
 
@@ -12141,10 +12141,10 @@ RunService.Heartbeat:Connect(function(step)
     local goalRightPosition = workspace.MechRTarget.Position
     local rayResult = workspace:Raycast(workspace.MechLTarget.Position,down,footParams)
     if rayResult then
-       leftLegChain:IterateOnce(rayResult.Position,0.1)
+       --leftLegChain:IterateOnce(rayResult.Position,0.1)
     end
     --leftLegChain:IterateOnce(goalPosition,0.1)
-    leftLegChain:UpdateMotors()
+    --leftLegChain:UpdateMotors()
 
     rightLegChain:IterateOnce(goalRightPosition,0.1)
     rightLegChain:UpdateMotors()
@@ -14854,6 +14854,7 @@ function FabrikConstraint.new(Part)
     --If there is a part, relative constraint axis is set accordingly
     if Part then
     obj.Part = Part
+    obj.PartInitialCFrame = Part.CFrame
     obj.CenterAxis = Part.CFrame.LookVector
     obj.XAxis = Part.CFrame.RightVector
     obj.YAxis = Part.CFrame.UpVector
@@ -14912,18 +14913,20 @@ function FabrikConstraint:UpdateJointAxis(jointPosition,jointAxis)
         --creates the part and parents it to the workspace
         self.DebugPart = Instance.new("WedgePart")
         self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
-        self.DebugPart.Size = Vector3.new(1,1,3)
+        self.DebugPart.Size = Vector3.new(1,1,2)
         self.DebugPart.Anchored = true
         self.DebugPart.Parent = workspace
         self.DebugPartCreated = true
     elseif self.DebugMode then
         
         --ok it works
-        local jointCFrameAtMotor = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
-        --self.DebugPart.CFrame = jointCFrameAtMotor
+        local jointCFrameAtMotor = (jointAxis-jointAxis.Position)
+        --self.DebugPart.CFrame = CFrame.new(jointPosition)*jointCFrameAtMotor
 
+        local initialRotation = self.PartInitialCFrame-self.PartInitialCFrame.Position
         --now needs to be relative to the part constraints
-        self.DebugPart.CFrame = CFrame.new(jointPosition)*jointCFrameAtMotor:ToObjectSpace(self.Part.CFrame)
+        local ConstraintAxisRotation = jointCFrameAtMotor:ToWorldSpace(initialRotation)-jointCFrameAtMotor:ToWorldSpace(initialRotation).Position
+        self.DebugPart.CFrame = ConstraintAxisRotation+self.Part.CFrame.Position
 
     end
 
@@ -15747,6 +15750,8 @@ function FabrikSolver.new(OriginalLimbVectorTable,LimbVectorTable, LimbLengthTab
     --Obtain a CFrame axis at each joint to do constraints with
     obj.JointAxisTable = nil
 
+    obj.JointWorldPositionTable = {}
+
     -- Initialize number for summing
     local MaxLength = 0
     -- adds all the magnitudes of the limb vector
@@ -15792,6 +15797,7 @@ function FabrikSolver:IterateOnce(originCF, targetPosition, tolerance)
         -- Do backwards on itself first then forwards
         self:Backwards(originCF, targetPosition)
         self:Forwards(originCF, targetPosition)
+        self:UpdateJointAxis(originCF)
 
         return self.LimbVectorTable
 
@@ -15980,17 +15986,31 @@ end
 ]]
 function FabrikSolver:UpdateJointAxis(originCF)
 
+    
     --If joint axis hasn't been created yet then create it
     local newJointAxisTable = {}
+    local newJointWorldPositionTable = {}
     if not self.JointAxisTable then
+        --store replicas of the originCF at each joint
         for i =1, #self.OriginalLimbVectorTable, 1 do
-            newJointAxisTable[#newJointAxisTable+1]= originCF
+            newJointAxisTable[#newJointAxisTable+1]= originCF-originCF.Position
         end
         self.JointAxisTable = newJointAxisTable
+
     else
+        --adjust the first
+        self.JointAxisTable[1] = originCF-originCF.Position
+
+        local vectorSumFromFirstJoint = Vector3.new()
 
         for i=1,#self.OriginalLimbVectorTable-1,1 do
         
+
+            if i ~= 1 then
+                vectorSumFromFirstJoint = vectorSumFromFirstJoint + self.LimbVectorTable[i]
+            end
+            local motorPosition = originCF.Position + vectorSumFromFirstJoint
+
             --Obtains the direction of the original vector limb
             local originalVectorLimb = self.OriginalLimbVectorTable[i]
             local currentVectorLimb = self.LimbVectorTable[i]
@@ -16003,8 +16023,12 @@ function FabrikSolver:UpdateJointAxis(originCF)
             local limbRotationAngle = math.acos(safetyClamp)
             local limbRotationAxis = limbVectorRelativeToOriginal:Cross(currentVectorLimb) -- obtain the rotation axis
         
-            local rotateCF = CFrame.fromAxisAngle(limbRotationAxis,limbRotationAngle)
-            self.JointAxisTable[i+1] = self.JointAxisTable[i]*rotateCF
+            
+            local previousJointCF = self.JointAxisTable[i]
+            local undoPreviousLimbCF = previousJointCF:Inverse()*CFrame.new(motorPosition)
+            local rotateCF = CFrame.fromAxisAngle(limbRotationAxis,limbRotationAngle)*CFrame.fromMatrix(Vector3.new(),previousJointCF.RightVector,previousJointCF.UpVector)
+
+            self.JointAxisTable[i+1] = undoPreviousLimbCF*rotateCF
             
         end
     end

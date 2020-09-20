@@ -34,7 +34,7 @@ function BallSocketConstraint:ConstrainLimbVector(jointPosition,limbVector,limbL
         --Get the parts current CFrame
         --Big problem as its relative to the part attached to the motor
         self:UpdateAxis()
-        self:UpdateJointAxis(jointPosition,jointAxis)
+        --self:UpdateJointAxis(jointPosition,jointAxis)
 
 
         --Get the Axis
