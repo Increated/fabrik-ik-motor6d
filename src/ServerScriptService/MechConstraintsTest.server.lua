@@ -98,7 +98,7 @@ leftLegChain:SetSecondaryConstraints(leftLegConstraintsSecondary)
 local leftLegRegionPart1 = lowerBody.ConstraintZones.LeftLegPart1
 local leftLegRegionPart2 = lowerBody.ConstraintZones.LeftLegPart2
 local leftLegRegion = {leftLegRegionPart1,leftLegRegionPart2}
-leftLegChain:SetPrimaryConstraintRegion(leftLegRegion)
+--leftLegChain:SetPrimaryConstraintRegion(leftLegRegion)
 
 --Repeat for the right leg-----------
 
@@ -132,7 +132,7 @@ rightLegChain:SetSecondaryConstraints(rightLegConstraintsSecondary)
 local rightLegRegionPart1 = lowerBody.ConstraintZones.RightLegPart1
 local rightLegRegionPart2 = lowerBody.ConstraintZones.RightLegPart2
 local rightLegRegion = {rightLegRegionPart1,rightLegRegionPart2}
-rightLegChain:SetPrimaryConstraintRegion(rightLegRegion)
+--rightLegChain:SetPrimaryConstraintRegion(rightLegRegion)
 
 
 

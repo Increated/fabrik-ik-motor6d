@@ -14918,7 +14918,12 @@ function FabrikConstraint:UpdateJointAxis(jointPosition,jointAxis)
         self.DebugPartCreated = true
     elseif self.DebugMode then
         
-        self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
+        --ok it works
+        local jointCFrameAtMotor = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
+        --self.DebugPart.CFrame = jointCFrameAtMotor
+
+        --now needs to be relative to the part constraints
+        self.DebugPart.CFrame = CFrame.new(jointPosition)*jointCFrameAtMotor:ToObjectSpace(self.Part.CFrame)
 
     end
 
