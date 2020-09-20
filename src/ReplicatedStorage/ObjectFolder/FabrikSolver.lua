@@ -4,16 +4,29 @@ local Object = require(Package.BaseRedirect)
 
 local FabrikSolver = Object.new("FabrikSolver")
 
-function FabrikSolver.new(LimbVectorTable, LimbLengthTable, LimbConstraintTable,LimbChain)
+function FabrikSolver.new(OriginalLimbVectorTable,LimbVectorTable, LimbLengthTable,LimbChain)
+    
+    -- Initialize the object class
     local obj = FabrikSolver:make()
 
+    --Stores the variables from LimbChain to avoid parameter redundancies like in the old FABRIK module
+    --The limbchain object itself for a temporary solution to IterateUntilGoal
+    --Limb vectors are in terms of world space except for the original vectors
+    --Original limbvectors are relative to the hip
     obj.LimbChain = LimbChain
-    -- Initialize the object class
+
     obj.LimbVectorTable = LimbVectorTable
 
     obj.LimbLengthTable = LimbLengthTable
 
-    obj.LimbConstraintTable = LimbConstraintTable
+    obj.OriginalLimbVectorTable = OriginalLimbVectorTable
+
+    --empty to be inputted later
+    obj.LimbConstraintTable = {}
+
+    --New Axis referencing method
+    --Obtain a CFrame axis at each joint to do constraints with
+    obj.JointAxisTable = nil
 
     -- Initialize number for summing
     local MaxLength = 0
@@ -56,6 +69,7 @@ function FabrikSolver:IterateOnce(originCF, targetPosition, tolerance)
 
     if distanceToGoal >= tolerance then
 
+        self:UpdateJointAxis(originCF)
         -- Do backwards on itself first then forwards
         self:Backwards(originCF, targetPosition)
         self:Forwards(originCF, targetPosition)
@@ -169,10 +183,13 @@ function FabrikSolver:Backwards(originCF, targetPos)
         if limbConstraintTable and limbConstraintTable[i] and limbConstraintTable[i] ~= nil then
 
             local limbLength = limbLengthTable[i]
+
+            local currentJointAxis = self.JointAxisTable[i]
+
             -- Start the constraint according to the method
             -- print(limbConstraintTable[i])
             newLimbVector = limbConstraintTable[i]:ConstrainLimbVector(
-                                pointTowards, newLimbVector, limbLength)
+                                pointTowards, newLimbVector, limbLength,currentJointAxis)
             -- print("Index: ",i,"Vector: ",newLimbVector)
         end
         -- constructs the new vectable
@@ -224,7 +241,8 @@ function FabrikSolver:Forwards(originCF, targetPos)
             local limbLength = limbLengthTable[i]
             -- Start the constraint according to the method
 
-            newLimbVector = limbConstraintTable[i]:ConstrainLimbVector(jointPosition, newLimbVector, limbLength)
+            local currentJointAxis = self.JointAxisTable[i]
+            newLimbVector = limbConstraintTable[i]:ConstrainLimbVector(jointPosition, newLimbVector, limbLength,currentJointAxis)
 
         end
         -- constructs the new vectable
@@ -234,6 +252,43 @@ function FabrikSolver:Forwards(originCF, targetPos)
 
     -- Change the objects self vector table
     self.LimbVectorTable = limbVectorTable
+end
+
+--[[
+    Function to obtain the CFrame axis of each joint without needing updateMotors
+
+    originCF is the hip joint CFrame relative to the world
+]]
+function FabrikSolver:UpdateJointAxis(originCF)
+
+    --If joint axis hasn't been created yet then create it
+    local newJointAxisTable = {}
+    if not self.JointAxisTable then
+        for i =1, #self.OriginalLimbVectorTable, 1 do
+            newJointAxisTable[#newJointAxisTable+1]= originCF
+        end
+        self.JointAxisTable = newJointAxisTable
+    else
+
+        for i=1,#self.OriginalLimbVectorTable-1,1 do
+        
+            --Obtains the direction of the original vector limb
+            local originalVectorLimb = self.OriginalLimbVectorTable[i]
+            local currentVectorLimb = self.LimbVectorTable[i]
+
+            local currentJointReferenceCF = self.JointAxisTable[i]
+            -- Obtains the CFrame rotation calculation for CFrame.fromAxis
+            local limbVectorRelativeToOriginal = currentJointReferenceCF:VectorToWorldSpace(originalVectorLimb)
+            local dotProductAngle = limbVectorRelativeToOriginal.Unit:Dot(currentVectorLimb.Unit)
+            local safetyClamp = math.clamp(dotProductAngle, -1, 1)
+            local limbRotationAngle = math.acos(safetyClamp)
+            local limbRotationAxis = limbVectorRelativeToOriginal:Cross(currentVectorLimb) -- obtain the rotation axis
+        
+            local rotateCF = CFrame.fromAxisAngle(limbRotationAxis,limbRotationAngle)
+            self.JointAxisTable[i+1] = self.JointAxisTable[i]*rotateCF
+            
+        end
+    end
 end
 
 return FabrikSolver

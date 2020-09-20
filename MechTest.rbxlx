@@ -62,26 +62,26 @@
 			<Properties>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<CoordinateFrame name="CFrame">
-					<X>-57.7091446</X>
-					<Y>18.6376476</Y>
-					<Z>-13.7317686</Z>
-					<R00>-0.84388268</R00>
-					<R01>0.165299445</R01>
-					<R02>-0.510429382</R02>
-					<R10>-1.49011612e-08</R10>
-					<R11>0.951356888</R11>
-					<R12>0.308091164</R12>
-					<R20>0.536527753</R20>
-					<R21>0.259992808</R21>
-					<R22>-0.802833557</R22>
+					<X>-57.7270355</X>
+					<Y>19.7709045</Y>
+					<Z>-0.480403632</Z>
+					<R00>-0.285296977</R00>
+					<R01>0.498792738</R01>
+					<R02>-0.818420231</R02>
+					<R10>-0</R10>
+					<R11>0.853909492</R11>
+					<R12>0.520421863</R12>
+					<R20>0.958439231</R20>
+					<R21>0.148474783</R21>
+					<R22>-0.243617743</R22>
 				</CoordinateFrame>
 				<Ref name="CameraSubject">null</Ref>
 				<token name="CameraType">0</token>
 				<float name="FieldOfView">70</float>
 				<CoordinateFrame name="Focus">
-					<X>-56.6882858</X>
-					<Y>18.0214653</Y>
-					<Z>-12.1261015</Z>
+					<X>-56.0901947</X>
+					<Y>18.7300606</Y>
+					<Z>0.00683197379</Z>
 					<R00>1</R00>
 					<R01>0</R01>
 					<R02>0</R02>
@@ -1939,7 +1939,7 @@ gcLgc4RKxr21zq2UlJSM]]></BinaryString>
 						<CoordinateFrame name="CFrame">
 							<X>-44.3192406</X>
 							<Y>12.1503162</Y>
-							<Z>-5.31923008</Z>
+							<Z>-5.31922913</Z>
 							<R00>-1</R00>
 							<R01>0</R01>
 							<R02>0</R02>
@@ -2004,7 +2004,7 @@ gcLgc4RKxr21zq2UlJSM]]></BinaryString>
 							<BinaryString name="AttributesSerialize"></BinaryString>
 							<CoordinateFrame name="CFrame0">
 								<X>-7.62939453e-06</X>
-								<Y>6.69338846</Y>
+								<Y>6.69338799</Y>
 								<Z>-3.2218256</Z>
 								<R00>-1</R00>
 								<R01>0</R01>
@@ -13854,11 +13854,13 @@ end
 --[[
     Constraints the limbVector like a ball socket joint
 ]]
-function BallSocketConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength)
+function BallSocketConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength,jointAxis)
     
         --Get the parts current CFrame
         --Big problem as its relative to the part attached to the motor
         self:UpdateAxis()
+        self:UpdateJointAxis(jointPosition,jointAxis)
+
 
         --Get the Axis
         local centerAxis = self.CenterAxis.Unit
@@ -13993,11 +13995,12 @@ end
     Constraints the limbVector like a hinge
     returns a new limbvector
 ]]
-function HingeConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength)
+function HingeConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength,jointAxis)
 
     --Gets the part's current CFrame
     self:UpdateAxis()
-    
+    self:UpdateJointAxis(jointPosition,jointAxis)
+
     --Create a plane that is located on the joint with a surface normal to the rightvector
     local planeOnJoint = MathPlane.new(self.XAxis,jointPosition)
 
@@ -14118,7 +14121,7 @@ end
     or it points in the motor6ds original direction
     returns a new limbvector vector 3 at full length
 ]]
-function RigidConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength)
+function RigidConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength,jointAxis)
     
     --Checks if there is a part to set the constraint axis to
     if self.Part ~=nil then
@@ -14856,6 +14859,10 @@ function FabrikConstraint.new(Part)
     obj.YAxis = Part.CFrame.UpVector
     end
 
+    obj.DebugMode = true
+    obj.DebugPartCreated = false
+    obj.DebugPart = nil
+
     return obj
 end
 
@@ -14864,6 +14871,7 @@ end
     empty as each constraint has it's own special constraint method
 ]]
 function FabrikConstraint:ConstrainLimbVector()
+
 
 end
 
@@ -14897,6 +14905,25 @@ function FabrikConstraint:UpdateAxis()
     self.YAxis = self.Part.CFrame.UpVector
 
 end
+
+function FabrikConstraint:UpdateJointAxis(jointPosition,jointAxis)
+
+    if self.DebugMode and not self.DebugPartCreated then
+        --creates the part and parents it to the workspace
+        self.DebugPart = Instance.new("WedgePart")
+        self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
+        self.DebugPart.Size = Vector3.new(1,1,3)
+        self.DebugPart.Anchored = true
+        self.DebugPart.Parent = workspace
+        self.DebugPartCreated = true
+    elseif self.DebugMode then
+        
+        self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
+
+    end
+
+end
+
 
 function FabrikConstraint:UpdateYAxis()
 
@@ -15101,9 +15128,9 @@ function LimbChain.new(Motor6DTable,IncludeFoot,SpineMotor)
         I was planning on initiailizing the object with constraints but the constraints methods
         require the LimbChain to be CREATED FIRST in order to do stuff like find the rigid joint vector.
     ]]
-    obj.LimbConstraintTable = LimbConstraintTable
+    obj.LimbConstraintTable = {}
     --Once the limb vectors are initialized store them in a FabrikSolver object which does the Fabrik iteration
-    local LimbFabrikSolver = FabrikSolver.new(IteratedLimbVectorTable,LimbLengthTable,LimbConstraintTable,obj)
+    local LimbFabrikSolver = FabrikSolver.new(LimbVectorTable,IteratedLimbVectorTable,LimbLengthTable,obj)
     obj.LimbFabrikSolver = LimbFabrikSolver
 
     --Creates a empty table to store motor c0 for tweening
@@ -15151,7 +15178,7 @@ function LimbChain:Iterate(tolerance, targetPosition,limbConstraintTable)
 
     --Performs the iteration on the LimbChain object IteratedLimbVectorTable and rewrites it
     --Recursive function
-    self.IteratedLimbVectorTable = FabrikAlgo(tolerance, originJointCF, targetPosition+bottomFootOffset, self.IteratedLimbVectorTable, self.LimbLengthTable,limbConstraintTable)
+    self.IteratedLimbVectorTable = FabrikAlgo(tolerance, originJointCF, targetPosition, self.IteratedLimbVectorTable, self.LimbLengthTable,limbConstraintTable)
                                               
 
 end
@@ -15691,16 +15718,29 @@ local Object = require(Package.BaseRedirect)
 
 local FabrikSolver = Object.new("FabrikSolver")
 
-function FabrikSolver.new(LimbVectorTable, LimbLengthTable, LimbConstraintTable,LimbChain)
+function FabrikSolver.new(OriginalLimbVectorTable,LimbVectorTable, LimbLengthTable,LimbChain)
+    
+    -- Initialize the object class
     local obj = FabrikSolver:make()
 
+    --Stores the variables from LimbChain to avoid parameter redundancies like in the old FABRIK module
+    --The limbchain object itself for a temporary solution to IterateUntilGoal
+    --Limb vectors are in terms of world space except for the original vectors
+    --Original limbvectors are relative to the hip
     obj.LimbChain = LimbChain
-    -- Initialize the object class
+
     obj.LimbVectorTable = LimbVectorTable
 
     obj.LimbLengthTable = LimbLengthTable
 
-    obj.LimbConstraintTable = LimbConstraintTable
+    obj.OriginalLimbVectorTable = OriginalLimbVectorTable
+
+    --empty to be inputted later
+    obj.LimbConstraintTable = {}
+
+    --New Axis referencing method
+    --Obtain a CFrame axis at each joint to do constraints with
+    obj.JointAxisTable = nil
 
     -- Initialize number for summing
     local MaxLength = 0
@@ -15743,6 +15783,7 @@ function FabrikSolver:IterateOnce(originCF, targetPosition, tolerance)
 
     if distanceToGoal >= tolerance then
 
+        self:UpdateJointAxis(originCF)
         -- Do backwards on itself first then forwards
         self:Backwards(originCF, targetPosition)
         self:Forwards(originCF, targetPosition)
@@ -15856,10 +15897,13 @@ function FabrikSolver:Backwards(originCF, targetPos)
         if limbConstraintTable and limbConstraintTable[i] and limbConstraintTable[i] ~= nil then
 
             local limbLength = limbLengthTable[i]
+
+            local currentJointAxis = self.JointAxisTable[i]
+
             -- Start the constraint according to the method
             -- print(limbConstraintTable[i])
             newLimbVector = limbConstraintTable[i]:ConstrainLimbVector(
-                                pointTowards, newLimbVector, limbLength)
+                                pointTowards, newLimbVector, limbLength,currentJointAxis)
             -- print("Index: ",i,"Vector: ",newLimbVector)
         end
         -- constructs the new vectable
@@ -15911,7 +15955,8 @@ function FabrikSolver:Forwards(originCF, targetPos)
             local limbLength = limbLengthTable[i]
             -- Start the constraint according to the method
 
-            newLimbVector = limbConstraintTable[i]:ConstrainLimbVector(jointPosition, newLimbVector, limbLength)
+            local currentJointAxis = self.JointAxisTable[i]
+            newLimbVector = limbConstraintTable[i]:ConstrainLimbVector(jointPosition, newLimbVector, limbLength,currentJointAxis)
 
         end
         -- constructs the new vectable
@@ -15921,6 +15966,43 @@ function FabrikSolver:Forwards(originCF, targetPos)
 
     -- Change the objects self vector table
     self.LimbVectorTable = limbVectorTable
+end
+
+--[[
+    Function to obtain the CFrame axis of each joint without needing updateMotors
+
+    originCF is the hip joint CFrame relative to the world
+]]
+function FabrikSolver:UpdateJointAxis(originCF)
+
+    --If joint axis hasn't been created yet then create it
+    local newJointAxisTable = {}
+    if not self.JointAxisTable then
+        for i =1, #self.OriginalLimbVectorTable, 1 do
+            newJointAxisTable[#newJointAxisTable+1]= originCF
+        end
+        self.JointAxisTable = newJointAxisTable
+    else
+
+        for i=1,#self.OriginalLimbVectorTable-1,1 do
+        
+            --Obtains the direction of the original vector limb
+            local originalVectorLimb = self.OriginalLimbVectorTable[i]
+            local currentVectorLimb = self.LimbVectorTable[i]
+
+            local currentJointReferenceCF = self.JointAxisTable[i]
+            -- Obtains the CFrame rotation calculation for CFrame.fromAxis
+            local limbVectorRelativeToOriginal = currentJointReferenceCF:VectorToWorldSpace(originalVectorLimb)
+            local dotProductAngle = limbVectorRelativeToOriginal.Unit:Dot(currentVectorLimb.Unit)
+            local safetyClamp = math.clamp(dotProductAngle, -1, 1)
+            local limbRotationAngle = math.acos(safetyClamp)
+            local limbRotationAxis = limbVectorRelativeToOriginal:Cross(currentVectorLimb) -- obtain the rotation axis
+        
+            local rotateCF = CFrame.fromAxisAngle(limbRotationAxis,limbRotationAngle)
+            self.JointAxisTable[i+1] = self.JointAxisTable[i]*rotateCF
+            
+        end
+    end
 end
 
 return FabrikSolver
@@ -16488,71 +16570,12 @@ end]]></ProtectedString>
 						<Content name="LinkedSource"><null></null></Content>
 						<string name="Name">format</string>
 						<string name="ScriptGuid">{c6a52003-27f9-4bae-8461-57eb8b61f7d9}</string>
-						<ProtectedString name="Source"><![CDATA[-- File to just shift alt F format all
-
-function LimbChain:UpdateMotorAtIndex(Index)
-
-    -- Gets the CFrame of the Initial joint at world space
-    local initialJointCFrame = self.Motor6DTable[1].Part0.CFrame *
-                                   self.FirstJointC0
-
-    -- Vector sum for the for loop to get the series of position of the next joint based on the algorithm
-    local vectorSumFromFirstJoint = Vector3.new()
-
-    -- Only rotates at motor at index
-
-    -- Obtains the current limb that is being worked on
-    local originalVectorLimb = self.LimbVectorTable[i]
-    local currentVectorLimb = self.IteratedLimbVectorTable[i]
-
-    -- Obtains the CFrame of the part0 limb of the motor6d
-    local previousLimbPart = self.Motor6DTable[i].Part0
-    local previousLimbCF = previousLimbPart.CFrame
-
-    -- Obtains the CFrame rotation calculation for CFrame.fromAxis
-    local limbVectorRelativeToOriginal =
-        previousLimbCF:VectorToWorldSpace(originalVectorLimb)
-    local dotProductAngle = limbVectorRelativeToOriginal.Unit:Dot(
-                                currentVectorLimb.Unit)
-    local safetyClamp = math.clamp(dotProductAngle, -1, 1)
-    local limbRotationAngle = math.acos(safetyClamp)
-    local limbRotationAxis = limbVectorRelativeToOriginal:Cross(
-                                 currentVectorLimb) -- obtain the rotation axis
-
-    -- Checks if the axis exists if cross product returns zero somehow
-    if limbRotationAxis ~= Vector3.new(0, 0, 0) then
-
-        -- Gets the world space of the joint from the iterated limb vectors
-        if i ~= 1 then
-            vectorSumFromFirstJoint = vectorSumFromFirstJoint +
-                                          self.IteratedLimbVectorTable[i - 1]
-        end
-
-        -- Gets the position of the current limb joint
-        local motorPosition = initialJointCFrame.Position +
-                                  vectorSumFromFirstJoint
-
-        -- Now adding a debug mode----------------------------------------------------------------
-        -- Puts the created parts according to the motor position
-        if self.DebugMode then
-            workspace["LimbVector:" .. i].Position = motorPosition
-        end
-        ----------------------------------------------------------------
-        -- Obtain the CFrame operations needed to rotate the limb to the goal
-        local undoPreviousLimbCF = previousLimbCF:Inverse() *
-                                       CFrame.new(motorPosition)
-        local rotateLimbCF = CFrame.fromAxisAngle(limbRotationAxis,
-                                                  limbRotationAngle) *
-                                 CFrame.fromMatrix(Vector3.new(),
-                                                   previousLimbCF.RightVector,
-                                                   previousLimbCF.UpVector)
-
-        -- Changes the current motor6d through c0
-        self.Motor6DTable[i].C0 = undoPreviousLimbCF * rotateLimbCF
-
-    end
-
-end
+						<ProtectedString name="Source"><![CDATA[-- Obtains the CFrame rotation calculation for CFrame.fromAxis
+local limbVectorRelativeToOriginal = previousLimbCF:VectorToWorldSpace(originalVectorLimb)
+local dotProductAngle = limbVectorRelativeToOriginal.Unit:Dot(currentVectorLimb.Unit)
+local safetyClamp = math.clamp(dotProductAngle, -1, 1)
+local limbRotationAngle = math.acos(safetyClamp)
+local limbRotationAxis = limbVectorRelativeToOriginal:Cross(currentVectorLimb) -- obtain the rotation axis
 ]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>

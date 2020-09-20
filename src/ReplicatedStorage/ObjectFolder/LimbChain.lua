@@ -100,9 +100,9 @@ function LimbChain.new(Motor6DTable,IncludeFoot,SpineMotor)
         I was planning on initiailizing the object with constraints but the constraints methods
         require the LimbChain to be CREATED FIRST in order to do stuff like find the rigid joint vector.
     ]]
-    obj.LimbConstraintTable = LimbConstraintTable
+    obj.LimbConstraintTable = {}
     --Once the limb vectors are initialized store them in a FabrikSolver object which does the Fabrik iteration
-    local LimbFabrikSolver = FabrikSolver.new(IteratedLimbVectorTable,LimbLengthTable,LimbConstraintTable,obj)
+    local LimbFabrikSolver = FabrikSolver.new(LimbVectorTable,IteratedLimbVectorTable,LimbLengthTable,obj)
     obj.LimbFabrikSolver = LimbFabrikSolver
 
     --Creates a empty table to store motor c0 for tweening
@@ -150,7 +150,7 @@ function LimbChain:Iterate(tolerance, targetPosition,limbConstraintTable)
 
     --Performs the iteration on the LimbChain object IteratedLimbVectorTable and rewrites it
     --Recursive function
-    self.IteratedLimbVectorTable = FabrikAlgo(tolerance, originJointCF, targetPosition+bottomFootOffset, self.IteratedLimbVectorTable, self.LimbLengthTable,limbConstraintTable)
+    self.IteratedLimbVectorTable = FabrikAlgo(tolerance, originJointCF, targetPosition, self.IteratedLimbVectorTable, self.LimbLengthTable,limbConstraintTable)
                                               
 
 end

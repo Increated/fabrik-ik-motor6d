@@ -29,11 +29,12 @@ end
     Constraints the limbVector like a hinge
     returns a new limbvector
 ]]
-function HingeConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength)
+function HingeConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength,jointAxis)
 
     --Gets the part's current CFrame
     self:UpdateAxis()
-    
+    self:UpdateJointAxis(jointPosition,jointAxis)
+
     --Create a plane that is located on the joint with a surface normal to the rightvector
     local planeOnJoint = MathPlane.new(self.XAxis,jointPosition)
 

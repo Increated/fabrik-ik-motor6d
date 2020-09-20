@@ -44,7 +44,7 @@ end
     or it points in the motor6ds original direction
     returns a new limbvector vector 3 at full length
 ]]
-function RigidConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength)
+function RigidConstraint:ConstrainLimbVector(jointPosition,limbVector,limbLength,jointAxis)
     
     --Checks if there is a part to set the constraint axis to
     if self.Part ~=nil then

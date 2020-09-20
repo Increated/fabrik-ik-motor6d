@@ -16,6 +16,10 @@ function FabrikConstraint.new(Part)
     obj.YAxis = Part.CFrame.UpVector
     end
 
+    obj.DebugMode = true
+    obj.DebugPartCreated = false
+    obj.DebugPart = nil
+
     return obj
 end
 
@@ -24,6 +28,7 @@ end
     empty as each constraint has it's own special constraint method
 ]]
 function FabrikConstraint:ConstrainLimbVector()
+
 
 end
 
@@ -57,6 +62,25 @@ function FabrikConstraint:UpdateAxis()
     self.YAxis = self.Part.CFrame.UpVector
 
 end
+
+function FabrikConstraint:UpdateJointAxis(jointPosition,jointAxis)
+
+    if self.DebugMode and not self.DebugPartCreated then
+        --creates the part and parents it to the workspace
+        self.DebugPart = Instance.new("WedgePart")
+        self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
+        self.DebugPart.Size = Vector3.new(1,1,3)
+        self.DebugPart.Anchored = true
+        self.DebugPart.Parent = workspace
+        self.DebugPartCreated = true
+    elseif self.DebugMode then
+        
+        self.DebugPart.CFrame = CFrame.new(jointPosition)*(jointAxis-jointAxis.Position)
+
+    end
+
+end
+
 
 function FabrikConstraint:UpdateYAxis()
 
